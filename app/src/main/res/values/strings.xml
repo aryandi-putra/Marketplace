@@ -11,8 +11,17 @@
     <string name="login_password_hide">Hide password</string>
     <string name="login_password_show">Show password</string>
     <string name="login_button">Login</string>
+    <string name="login_dummy_button">Quick Login (Test)</string>
     <string name="login_success_icon_desc">Success</string>
     <string name="login_success_message">Login Successful!</string>
     <string name="login_token_prefix">Token: %1$s…</string>
     <string name="login_test_credentials">Test credentials:\nUsername: mor_2314\nPassword: 83r5^_</string>
+
+    <string name="products_title">Products</string>
+    <string name="products_all_categories">All Categories</string>
+    <string name="products_category_label">Category</string>
+    <string name="products_error_retry">Retry</string>
+    <string name="products_loading">Loading products…</string>
+    <string name="products_empty">No products found</string>
+    <string name="products_price_format">$%.2f</string>
 </resources>
