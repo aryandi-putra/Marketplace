@@ -2,8 +2,12 @@ package com.aryandi.marketplace.di
 
 import com.aryandi.marketplace.data.remote.AuthApi
 import com.aryandi.marketplace.data.remote.AuthApiImpl
+import com.aryandi.marketplace.data.remote.ProductApi
+import com.aryandi.marketplace.data.remote.ProductApiImpl
 import com.aryandi.marketplace.data.repository.AuthRepository
 import com.aryandi.marketplace.data.repository.AuthRepositoryImpl
+import com.aryandi.marketplace.data.repository.ProductRepository
+import com.aryandi.marketplace.data.repository.ProductRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -25,4 +29,16 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         authRepositoryImpl: AuthRepositoryImpl
     ): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProductApi(
+        productApiImpl: ProductApiImpl
+    ): ProductApi
+
+    @Binds
+    @Singleton
+    abstract fun bindProductRepository(
+        productRepositoryImpl: ProductRepositoryImpl
+    ): ProductRepository
 }
