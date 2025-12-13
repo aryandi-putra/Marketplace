@@ -1,5 +1,6 @@
 package com.aryandi.marketplace.presentation.login
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aryandi.marketplace.domain.usecase.LoginUseCase
@@ -12,9 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Stable
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase
@@ -22,6 +25,9 @@ class LoginViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(LoginState())
     val state: StateFlow<LoginState> = _state.asStateFlow()
+
+    private val _effect = Channel<LoginEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
 
     val intentChannel = Channel<LoginIntent>(Channel.UNLIMITED)
 
@@ -36,7 +42,6 @@ class LoginViewModel @Inject constructor(
                     is LoginIntent.Login -> login(intent.username, intent.password)
                     is LoginIntent.UpdateUsername -> updateUsername(intent.username)
                     is LoginIntent.UpdatePassword -> updatePassword(intent.password)
-                    is LoginIntent.ClearError -> clearError()
                 }
             }
         }
@@ -46,27 +51,17 @@ class LoginViewModel @Inject constructor(
         loginUseCase(username, password).onEach { result ->
             when (result) {
                 is Resource.Loading -> {
-                    _state.value = _state.value.copy(
-                        isLoading = true,
-                        error = null
-                    )
+                    _state.value = _state.value.copy(isLoading = true)
                 }
 
                 is Resource.Success -> {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        isSuccess = true,
-                        token = result.data?.token,
-                        error = null
-                    )
+                    _state.value = _state.value.copy(isLoading = false)
+                    _effect.send(LoginEffect.NavigateToProducts(result.data?.token ?: ""))
                 }
 
                 is Resource.Error -> {
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        isSuccess = false,
-                        error = result.message
-                    )
+                    _state.value = _state.value.copy(isLoading = false)
+                    _effect.send(LoginEffect.ShowError(result.message ?: "Unknown error"))
                 }
             }
         }.launchIn(viewModelScope)
@@ -78,10 +73,6 @@ class LoginViewModel @Inject constructor(
 
     private fun updatePassword(password: String) {
         _state.value = _state.value.copy(password = password)
-    }
-
-    private fun clearError() {
-        _state.value = _state.value.copy(error = null)
     }
 
     fun sendIntent(intent: LoginIntent) {
