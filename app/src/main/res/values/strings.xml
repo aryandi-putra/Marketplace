@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">Marketplace</string>
+
+    <string name="login_title">Fake Store</string>
+    <string name="login_username_label">Username</string>
+    <string name="login_username_placeholder">Enter your username</string>
+    <string name="login_username_content_desc">Username</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_password_placeholder">Enter your password</string>
+    <string name="login_password_content_desc">Password</string>
+    <string name="login_password_hide">Hide password</string>
+    <string name="login_password_show">Show password</string>
+    <string name="login_button">Login</string>
+    <string name="login_success_icon_desc">Success</string>
+    <string name="login_success_message">Login Successful!</string>
+    <string name="login_token_prefix">Token: %1$s…</string>
+    <string name="login_test_credentials">Test credentials:\nUsername: mor_2314\nPassword: 83r5^_</string>
 </resources>
