@@ -8,7 +8,6 @@ data class ProductsState(
     val selectedCategory: String? = null,
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val error: String? = null,
     val hasMorePages: Boolean = true,
     val currentPage: Int = 1
 )

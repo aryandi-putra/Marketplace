@@ -73,16 +73,17 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
-            onLoginSuccess(state.token ?: "")
-        }
-    }
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is LoginEffect.NavigateToProducts -> {
+                    onLoginSuccess(effect.token)
+                }
 
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-            viewModel.sendIntent(LoginIntent.ClearError)
+                is LoginEffect.ShowError -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+            }
         }
     }
 
@@ -280,7 +281,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             AnimatedVisibility(
-                visible = state.isSuccess,
+                visible = false,
                 enter = fadeIn() + slideInVertically(),
                 exit = fadeOut() + slideOutVertically()
             ) {
@@ -313,15 +314,7 @@ fun LoginScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
 
-                        state.token?.let { token ->
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.login_token_prefix, token.take(30)),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                                textAlign = TextAlign.Center
-                            )
-                        }
+
                     }
                 }
             }

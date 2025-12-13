@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,6 +29,9 @@ class ProductsViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ProductsState())
     val state: StateFlow<ProductsState> = _state.asStateFlow()
+
+    private val _effect = Channel<ProductsEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
 
     val intentChannel = Channel<ProductsIntent>(Channel.UNLIMITED)
 
@@ -58,26 +62,20 @@ class ProductsViewModel @Inject constructor(
             getProductsUseCase().onEach { result ->
                 when (result) {
                     is Resource.Loading -> {
-                        _state.value = _state.value.copy(
-                            isLoading = true,
-                            error = null
-                        )
+                        _state.value = _state.value.copy(isLoading = true)
                     }
 
                     is Resource.Success -> {
                         _state.value = _state.value.copy(
                             products = result.data ?: emptyList(),
                             isLoading = false,
-                            error = null,
                             currentPage = 1
                         )
                     }
 
                     is Resource.Error -> {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = result.message
-                        )
+                        _state.value = _state.value.copy(isLoading = false)
+                        _effect.send(ProductsEffect.ShowError(result.message ?: "Unknown error"))
                     }
                 }
             }.launchIn(viewModelScope)
@@ -85,26 +83,20 @@ class ProductsViewModel @Inject constructor(
             getProductsByCategoryUseCase(category).onEach { result ->
                 when (result) {
                     is Resource.Loading -> {
-                        _state.value = _state.value.copy(
-                            isLoading = true,
-                            error = null
-                        )
+                        _state.value = _state.value.copy(isLoading = true)
                     }
 
                     is Resource.Success -> {
                         _state.value = _state.value.copy(
                             products = result.data ?: emptyList(),
                             isLoading = false,
-                            error = null,
                             currentPage = 1
                         )
                     }
 
                     is Resource.Error -> {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = result.message
-                        )
+                        _state.value = _state.value.copy(isLoading = false)
+                        _effect.send(ProductsEffect.ShowError(result.message ?: "Unknown error"))
                     }
                 }
             }.launchIn(viewModelScope)
