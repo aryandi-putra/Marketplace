@@ -1,3 +1,66 @@
 <resources>
     <string name="app_name">Marketplace</string>
+
+    <string name="login_title">Fake Store</string>
+    <string name="login_username_label">Username</string>
+    <string name="login_username_placeholder">Enter your username</string>
+    <string name="login_username_content_desc">Username</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_password_placeholder">Enter your password</string>
+    <string name="login_password_content_desc">Password</string>
+    <string name="login_password_hide">Hide password</string>
+    <string name="login_password_show">Show password</string>
+    <string name="login_button">Login</string>
+    <string name="login_dummy_button">Quick Login (Test)</string>
+    <string name="login_success_icon_desc">Success</string>
+    <string name="login_success_message">Login Successful!</string>
+    <string name="login_token_prefix">Token: %1$s…</string>
+    <string name="login_test_credentials">Test credentials:\nUsername: mor_2314\nPassword: 83r5^_</string>
+
+    <string name="products_title">Products</string>
+    <string name="products_all_categories">All Categories</string>
+    <string name="products_category_label">Category</string>
+    <string name="products_error_retry">Retry</string>
+    <string name="products_loading">Loading products…</string>
+    <string name="products_empty">No products found</string>
+    <string name="products_price_format">$%.2f</string>
+
+    <string name="product_detail_title">Product Details</string>
+    <string name="product_detail_back">Back</string>
+    <string name="product_detail_price_format">$%.2f</string>
+    <string name="product_detail_description_label">Description</string>
+    <string name="product_detail_add_to_cart">Add to Cart</string>
+    <string name="product_detail_adding_to_cart">Adding to Cart…</string>
+    <string name="product_detail_loading">Loading product details…</string>
+    <string name="product_detail_error_generic">Failed to load product details</string>
+    <string name="product_detail_retry">Retry</string>
+
+    <string name="cart_title">Shopping Cart</string>
+    <string name="cart_items_count">%d items</string>
+    <string name="cart_back">Back</string>
+    <string name="cart_price_format">$%.2f</string>
+    <string name="cart_decrease_quantity">Decrease quantity</string>
+    <string name="cart_increase_quantity">Increase quantity</string>
+    <string name="cart_remove_item">Remove item</string>
+    <string name="cart_order_summary">Order Summary</string>
+    <string name="cart_subtotal">Subtotal</string>
+    <string name="cart_tax">Tax (10%)</string>
+    <string name="cart_total">Total</string>
+    <string name="cart_checkout_button">Proceed to Checkout</string>
+    <string name="cart_empty_title">Your cart is empty</string>
+    <string name="cart_empty_message">Add some products to get started!</string>
+    <string name="cart_loading">Loading cart…</string>
+    <string name="cart_error_generic">Failed to load cart</string>
+    <string name="cart_retry">Retry</string>
+
+    <string name="profile_title">User Profile</string>
+    <string name="profile_loading">Loading profile…</string>
+    <string name="profile_error">Failed to load profile</string>
+    <string name="profile_retry">Retry</string>
+    <string name="profile_username">Username</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_phone">Phone</string>
+    <string name="profile_address">Address</string>
+    <string name="profile_name">Name</string>
+    <string name="profile_close">Close</string>
 </resources>

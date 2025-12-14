@@ -1,0 +1,128 @@
+package com.aryandi.marketplace.data.repository
+
+import com.aryandi.marketplace.data.local.dao.CartDao
+import com.aryandi.marketplace.data.local.entity.CartEntity
+import com.aryandi.marketplace.data.local.entity.CartProductData
+import com.aryandi.marketplace.data.local.entity.toCart
+import com.aryandi.marketplace.data.local.entity.toEntity
+import com.aryandi.marketplace.data.model.Cart
+import com.aryandi.marketplace.data.model.CartItem
+import com.aryandi.marketplace.data.remote.CartApi
+import com.aryandi.marketplace.data.remote.ProductApi
+import com.aryandi.marketplace.util.Resource
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import javax.inject.Inject
+
+
+class CartRepositoryImpl @Inject constructor(
+    private val cartApi: CartApi,
+    private val productApi: ProductApi,
+    private val cartDao: CartDao
+) : CartRepository {
+
+    companion object {
+        // Time limit for cache in milliseconds (10 minutes)
+        const val CACHE_TIMEOUT_MS = 10 * 60 * 1000L
+    }
+
+    private fun getCurrentDate(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return dateFormat.format(Date())
+    }
+
+    private suspend fun cartEntityToItems(cart: CartEntity): List<CartItem> =
+        cart.products.map { cartProductData ->
+            val product = productApi.getProductById(cartProductData.productId)
+            CartItem(product = product, quantity = cartProductData.quantity)
+        }
+
+    private fun isCacheValid(cart: CartEntity?): Boolean {
+        return cart != null && (System.currentTimeMillis() - cart.lastUpdated <= CACHE_TIMEOUT_MS)
+    }
+
+    override suspend fun getUserCart(userId: Int): Resource<List<CartItem>> {
+        return try {
+            val localCart = cartDao.getUserCart(userId)
+            val now = System.currentTimeMillis()
+
+            // Refresh from API if cache is invalid (missing or stale)
+            if (!isCacheValid(localCart)) {
+                refreshCacheFromRemote(userId, now)
+            }
+
+            // Return items from cache (now guaranteed fresh)
+            val cachedCart = cartDao.getUserCart(userId)
+            val items = cachedCart?.let { cartEntityToItems(it) } ?: emptyList()
+            Resource.Success(items)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "An unexpected error occurred")
+        }
+    }
+
+    private suspend fun refreshCacheFromRemote(userId: Int, now: Long) {
+        val remoteCarts = cartApi.getUserCart(userId)
+        remoteCarts.maxByOrNull { it.id }?.let { latestCart ->
+            cartDao.insertCart(latestCart.toEntity().copy(lastUpdated = now))
+        }
+        cartDao.cleanupOldCarts(userId)
+    }
+
+    override suspend fun addToCart(userId: Int, productId: Int, quantity: Int): Resource<Cart> {
+        return try {
+            // Update cache first
+            val now = System.currentTimeMillis()
+            val localCart = cartDao.getUserCart(userId)
+            val products = localCart?.products?.toMutableList() ?: mutableListOf()
+            val idx = products.indexOfFirst { it.productId == productId }
+            if (idx != -1) {
+                products[idx] = products[idx].copy(quantity = products[idx].quantity + quantity)
+            } else {
+                products.add(CartProductData(productId, quantity))
+            }
+
+            val updatedCart = CartEntity(
+                id = localCart?.id ?: 0,
+                userId = userId,
+                date = getCurrentDate(),
+                products = products,
+                lastUpdated = now
+            )
+            cartDao.insertCart(updatedCart)
+
+            // Sync with API (create or update in remote)
+            val apiCart = if ((localCart?.id ?: 0) != 0) {
+                cartApi.updateCart(updatedCart.id, updatedCart.toCart())
+            } else {
+                cartApi.addToCart(updatedCart.toCart())
+            }
+            cartDao.cleanupOldCarts(userId)
+            Resource.Success(apiCart)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to add item to cart")
+        }
+    }
+
+    override suspend fun updateCart(cartId: Int, cart: Cart): Resource<Cart> {
+        return try {
+            val now = System.currentTimeMillis()
+            // Update cache (write-through)
+            cartDao.insertCart(cart.toEntity().copy(lastUpdated = now))
+            val updatedCart = cartApi.updateCart(cartId, cart)
+            Resource.Success(updatedCart)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to update cart")
+        }
+    }
+
+    override suspend fun deleteCart(cartId: Int): Resource<Cart> {
+        return try {
+            cartDao.deleteCartById(cartId)
+            val deleted = cartApi.deleteCart(cartId)
+            Resource.Success(deleted)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to delete cart")
+        }
+    }
+}
