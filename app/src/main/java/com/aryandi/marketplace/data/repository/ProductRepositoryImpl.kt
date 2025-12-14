@@ -35,4 +35,13 @@ class ProductRepositoryImpl @Inject constructor(
             Resource.Error(e.message ?: "An unexpected error occurred")
         }
     }
+
+    override suspend fun getProductById(id: Int): Resource<Product> {
+        return try {
+            val product = productApi.getProductById(id)
+            Resource.Success(product)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "An unexpected error occurred")
+        }
+    }
 }

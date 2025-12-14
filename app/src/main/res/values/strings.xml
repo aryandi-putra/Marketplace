@@ -24,4 +24,13 @@
     <string name="products_loading">Loading products…</string>
     <string name="products_empty">No products found</string>
     <string name="products_price_format">$%.2f</string>
+
+    <string name="product_detail_title">Product Details</string>
+    <string name="product_detail_back">Back</string>
+    <string name="product_detail_price_format">$%.2f</string>
+    <string name="product_detail_description_label">Description</string>
+    <string name="product_detail_add_to_cart">Add to Cart</string>
+    <string name="product_detail_loading">Loading product details…</string>
+    <string name="product_detail_error_generic">Failed to load product details</string>
+    <string name="product_detail_retry">Retry</string>
 </resources>

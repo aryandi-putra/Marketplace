@@ -62,6 +62,7 @@ import com.aryandi.marketplace.data.model.Product
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsScreen(
+    onProductClick: (Int) -> Unit = {},
     viewModel: ProductsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -148,7 +149,10 @@ fun ProductsScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(state.products) { product ->
-                            ProductCard(product = product)
+                            ProductCard(
+                                product = product,
+                                onClick = { onProductClick(product.id) }
+                            )
                         }
 
                         if (state.isLoadingMore) {
@@ -256,9 +260,14 @@ fun CategorySpinner(
 }
 
 @Composable
-fun ProductCard(product: Product) {
+fun ProductCard(
+    product: Product,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {

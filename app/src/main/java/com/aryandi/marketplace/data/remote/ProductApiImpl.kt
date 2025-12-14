@@ -25,4 +25,8 @@ class ProductApiImpl @Inject constructor(
     override suspend fun getProductsByCategory(category: String): List<Product> {
         return client.get("$BASE_URL/products/category/$category").body()
     }
+
+    override suspend fun getProductById(id: Int): Product {
+        return client.get("$BASE_URL/products/$id").body()
+    }
 }
