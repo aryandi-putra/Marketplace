@@ -1,5 +1,6 @@
 package com.aryandi.marketplace.data.repository
 
+import com.aryandi.marketplace.data.model.Cart
 import com.aryandi.marketplace.data.model.CartItem
 import com.aryandi.marketplace.data.remote.CartApi
 import com.aryandi.marketplace.data.remote.ProductApi
@@ -34,6 +35,24 @@ class CartRepositoryImpl @Inject constructor(
             Resource.Success(cartItems)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "An unexpected error occurred")
+        }
+    }
+
+    override suspend fun updateCart(cartId: Int, cart: Cart): Resource<Cart> {
+        return try {
+            val updatedCart = cartApi.updateCart(cartId, cart)
+            Resource.Success(updatedCart)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to update cart")
+        }
+    }
+
+    override suspend fun deleteCart(cartId: Int): Resource<Cart> {
+        return try {
+            val deletedCart = cartApi.deleteCart(cartId)
+            Resource.Success(deletedCart)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to delete cart")
         }
     }
 }

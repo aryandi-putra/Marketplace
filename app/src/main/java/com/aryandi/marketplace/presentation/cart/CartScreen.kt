@@ -1,5 +1,10 @@
 package com.aryandi.marketplace.presentation.cart
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +38,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,6 +48,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,15 +67,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.aryandi.marketplace.R
 import com.aryandi.marketplace.data.model.CartItem
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     userId: Int = 1, // Default user ID from the Fake Store API
     onBackClick: () -> Unit,
+    viewModel: CartViewModel = hiltViewModel()
 ) {
-    val viewModel: CartViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(userId) {
         viewModel.sendIntent(CartIntent.LoadCart(userId))
@@ -92,6 +106,9 @@ fun CartScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { paddingValues ->
         Box(
@@ -120,6 +137,7 @@ fun CartScreen(
                 else -> {
                     CartContent(
                         state = state,
+                        snackbarHostState = snackbarHostState,
                         onQuantityChange = { productId, quantity ->
                             viewModel.sendIntent(CartIntent.UpdateQuantity(productId, quantity))
                         },
@@ -136,9 +154,12 @@ fun CartScreen(
 @Composable
 fun CartContent(
     state: CartState,
+    snackbarHostState: SnackbarHostState,
     onQuantityChange: (Int, Int) -> Unit,
     onRemoveItem: (Int) -> Unit
 ) {
+    var lastRemovedItem by remember { mutableStateOf<CartItem?>(null) }
+    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -150,12 +171,42 @@ fun CartContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(state.items) { item ->
-                CartItemCard(
-                    item = item,
-                    onQuantityChange = onQuantityChange,
-                    onRemove = onRemoveItem
-                )
+            items(
+                items = state.items,
+                key = { it.product.id }
+            ) { item ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = slideInVertically() + fadeIn(),
+                    exit = slideOutVertically() + fadeOut()
+                ) {
+                    CartItemCard(
+                        item = item,
+                        onQuantityChange = onQuantityChange,
+                        onRemove = { productId ->
+                            lastRemovedItem = item
+                            onRemoveItem(productId)
+
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "${item.product.title} removed from cart",
+                                    actionLabel = "UNDO",
+                                    withDismissAction = true
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    // Undo: add the item back
+                                    lastRemovedItem?.let { removedItem ->
+                                        onQuantityChange(
+                                            removedItem.product.id,
+                                            removedItem.quantity
+                                        )
+                                    }
+                                }
+                                lastRemovedItem = null
+                            }
+                        }
+                    )
+                }
             }
         }
 
