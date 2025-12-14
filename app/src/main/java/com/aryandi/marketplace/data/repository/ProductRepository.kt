@@ -9,4 +9,6 @@ interface ProductRepository {
     suspend fun getAllCategories(): Resource<List<String>>
 
     suspend fun getProductsByCategory(category: String): Resource<List<Product>>
+
+    suspend fun getProductById(id: Int): Resource<Product>
 }

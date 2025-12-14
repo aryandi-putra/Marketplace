@@ -4,10 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.aryandi.marketplace.presentation.login.LoginScreen
+import com.aryandi.marketplace.presentation.productdetail.ProductDetailScreen
 import com.aryandi.marketplace.presentation.products.ProductsScreen
 import com.aryandi.marketplace.ui.theme.MarketplaceTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,7 +39,28 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("products") {
-                        ProductsScreen()
+                        ProductsScreen(
+                            onProductClick = { productId ->
+                                navController.navigate("product/$productId")
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = "product/{productId}",
+                        arguments = listOf(
+                            navArgument("productId") {
+                                type = NavType.IntType
+                            }
+                        )
+                    ) { backStackEntry ->
+                        val productId = backStackEntry.arguments?.getInt("productId") ?: 0
+                        ProductDetailScreen(
+                            productId = productId,
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }
