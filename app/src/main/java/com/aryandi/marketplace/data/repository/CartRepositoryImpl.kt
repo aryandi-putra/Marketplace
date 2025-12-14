@@ -64,7 +64,7 @@ class CartRepositoryImpl @Inject constructor(
     private suspend fun refreshCacheFromRemote(userId: Int, now: Long) {
         val remoteCarts = cartApi.getUserCart(userId)
         remoteCarts.maxByOrNull { it.id }?.let { latestCart ->
-            cartDao.insertCart(latestCart.toEntity(needsSync = false).copy(lastUpdated = now))
+            cartDao.insertCart(latestCart.toEntity().copy(lastUpdated = now))
         }
         cartDao.cleanupOldCarts(userId)
     }
@@ -87,8 +87,7 @@ class CartRepositoryImpl @Inject constructor(
                 userId = userId,
                 date = getCurrentDate(),
                 products = products,
-                lastUpdated = now,
-                needsSync = true // flag for unsynced
+                lastUpdated = now
             )
             cartDao.insertCart(updatedCart)
 
@@ -98,8 +97,6 @@ class CartRepositoryImpl @Inject constructor(
             } else {
                 cartApi.addToCart(updatedCart.toCart())
             }
-            // Mark as synced in cache and cleanup
-            cartDao.markCartAsSynced(apiCart.id)
             cartDao.cleanupOldCarts(userId)
             Resource.Success(apiCart)
         } catch (e: Exception) {
@@ -111,9 +108,8 @@ class CartRepositoryImpl @Inject constructor(
         return try {
             val now = System.currentTimeMillis()
             // Update cache (write-through)
-            cartDao.insertCart(cart.toEntity(needsSync = true).copy(lastUpdated = now))
+            cartDao.insertCart(cart.toEntity().copy(lastUpdated = now))
             val updatedCart = cartApi.updateCart(cartId, cart)
-            cartDao.markCartAsSynced(updatedCart.id)
             Resource.Success(updatedCart)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Failed to update cart")

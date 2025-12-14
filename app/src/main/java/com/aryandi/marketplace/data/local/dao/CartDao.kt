@@ -21,9 +21,6 @@ interface CartDao {
     @Query("SELECT * FROM carts WHERE id = :cartId")
     suspend fun getCartById(cartId: Int): CartEntity?
 
-    @Query("SELECT * FROM carts WHERE needsSync = 1")
-    suspend fun getCartsNeedingSync(): List<CartEntity>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCart(cart: CartEntity): Long
 
@@ -38,12 +35,6 @@ interface CartDao {
 
     @Query("DELETE FROM carts")
     suspend fun deleteAllCarts()
-
-    @Query("UPDATE carts SET needsSync = 0 WHERE id = :cartId")
-    suspend fun markCartAsSynced(cartId: Int)
-
-    @Query("UPDATE carts SET needsSync = 1 WHERE id = :cartId")
-    suspend fun markCartAsNeedingSync(cartId: Int)
 
     @Query("SELECT COUNT(*) FROM carts WHERE userId = :userId")
     suspend fun getCartCount(userId: Int): Int

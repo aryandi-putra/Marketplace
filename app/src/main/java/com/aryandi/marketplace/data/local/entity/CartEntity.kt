@@ -52,22 +52,13 @@ fun CartEntity.toCart(): Cart {
     )
 }
 
-fun Cart.toEntity(needsSync: Boolean = false): CartEntity {
+fun Cart.toEntity(): CartEntity {
     return CartEntity(
         id = id,
         userId = userId,
         date = date,
         products = products.map {
             CartProductData(productId = it.productId, quantity = it.quantity)
-        },
-        needsSync = needsSync
+        }
     )
-}
-
-fun CartProduct.toCartProductData(): CartProductData {
-    return CartProductData(productId = productId, quantity = quantity)
-}
-
-fun CartProductData.toCartProduct(): CartProduct {
-    return CartProduct(productId = productId, quantity = quantity)
 }
