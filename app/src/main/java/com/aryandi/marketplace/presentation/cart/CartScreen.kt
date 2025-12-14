@@ -61,8 +61,8 @@ import com.aryandi.marketplace.data.model.CartItem
 fun CartScreen(
     userId: Int = 1, // Default user ID from the Fake Store API
     onBackClick: () -> Unit,
-    viewModel: CartViewModel = hiltViewModel()
 ) {
+    val viewModel: CartViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(userId) {

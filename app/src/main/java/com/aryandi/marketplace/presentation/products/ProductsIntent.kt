@@ -6,4 +6,5 @@ sealed class ProductsIntent {
     object LoadCategories : ProductsIntent()
     data class SelectCategory(val category: String?) : ProductsIntent()
     object Retry : ProductsIntent()
+    object LoadCartCount : ProductsIntent()
 }

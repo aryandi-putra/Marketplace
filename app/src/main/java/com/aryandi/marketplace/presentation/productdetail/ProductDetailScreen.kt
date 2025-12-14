@@ -56,8 +56,8 @@ import com.aryandi.marketplace.data.model.Product
 fun ProductDetailScreen(
     productId: Int,
     onBackClick: () -> Unit,
-    viewModel: ProductDetailViewModel = hiltViewModel()
 ) {
+    val viewModel: ProductDetailViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(productId) {

@@ -3,6 +3,7 @@ package com.aryandi.marketplace.presentation.products
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aryandi.marketplace.domain.usecase.GetCartUseCase
 import com.aryandi.marketplace.domain.usecase.GetCategoriesUseCase
 import com.aryandi.marketplace.domain.usecase.GetProductsUseCase
 import com.aryandi.marketplace.domain.usecase.GetProductsByCategoryUseCase
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class ProductsViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase,
     private val getCategoriesUseCase: GetCategoriesUseCase,
-    private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase
+    private val getProductsByCategoryUseCase: GetProductsByCategoryUseCase,
+    private val getCartUseCase: GetCartUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProductsState())
@@ -39,6 +41,7 @@ class ProductsViewModel @Inject constructor(
         handleIntents()
         sendIntent(ProductsIntent.LoadCategories)
         sendIntent(ProductsIntent.LoadProducts)
+        sendIntent(ProductsIntent.LoadCartCount)
     }
 
     private fun handleIntents() {
@@ -50,6 +53,7 @@ class ProductsViewModel @Inject constructor(
                     is ProductsIntent.LoadCategories -> loadCategories()
                     is ProductsIntent.SelectCategory -> selectCategory(intent.category)
                     is ProductsIntent.Retry -> retry()
+                    is ProductsIntent.LoadCartCount -> loadCartCount()
                 }
             }
         }
@@ -147,6 +151,27 @@ class ProductsViewModel @Inject constructor(
 
     private fun retry() {
         loadProducts()
+    }
+
+    private fun loadCartCount() {
+        // Using default user ID 1 from Fake Store API
+        getCartUseCase(userId = 1).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    val cartItems = result.data ?: emptyList()
+                    val totalCount = cartItems.sumOf { it.quantity }
+                    _state.value = _state.value.copy(cartItemCount = totalCount)
+                }
+
+                is Resource.Error -> {
+                    // Silently fail for cart count - not critical
+                }
+
+                is Resource.Loading -> {
+                    // Don't show loading for cart count
+                }
+            }
+        }.launchIn(viewModelScope)
     }
 
     fun sendIntent(intent: ProductsIntent) {
