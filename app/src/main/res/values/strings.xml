@@ -36,6 +36,7 @@
     <string name="product_detail_retry">Retry</string>
 
     <string name="cart_title">Shopping Cart</string>
+    <string name="cart_items_count">%d items</string>
     <string name="cart_back">Back</string>
     <string name="cart_price_format">$%.2f</string>
     <string name="cart_decrease_quantity">Decrease quantity</string>
