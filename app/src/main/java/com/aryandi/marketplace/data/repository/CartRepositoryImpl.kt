@@ -5,15 +5,20 @@ import com.aryandi.marketplace.data.model.CartItem
 import com.aryandi.marketplace.data.model.CartProduct
 import com.aryandi.marketplace.data.remote.CartApi
 import com.aryandi.marketplace.data.remote.ProductApi
+import com.aryandi.marketplace.data.local.dao.CartDao
+import com.aryandi.marketplace.data.local.entity.toCart
+import com.aryandi.marketplace.data.local.entity.toEntity
 import com.aryandi.marketplace.util.Resource
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class CartRepositoryImpl @Inject constructor(
     private val cartApi: CartApi,
-    private val productApi: ProductApi
+    private val productApi: ProductApi,
+    private val cartDao: CartDao
 ) : CartRepository {
 
     private fun getCurrentDate(): String {
@@ -21,18 +26,37 @@ class CartRepositoryImpl @Inject constructor(
         return dateFormat.format(Date())
     }
 
+    companion object {
+        // set cache duration to 10 minutes
+        private val CACHE_VALIDITY_MS = TimeUnit.MINUTES.toMillis(10)
+    }
+
+    private fun isCacheValid(cacheTimestamp: Long): Boolean {
+        return System.currentTimeMillis() - cacheTimestamp < CACHE_VALIDITY_MS
+    }
+
     override suspend fun getUserCart(userId: Int): Resource<List<CartItem>> {
         return try {
+            val cachedEntities = cartDao.getAllCarts().filter { it.userId == userId }
+            val latestCachedEntity = cachedEntities.maxByOrNull { it.id }
+            if (latestCachedEntity != null && cachedEntities.isNotEmpty() && isCacheValid(
+                    latestCachedEntity.lastUpdated
+                )
+            ) {
+                val cachedCart = latestCachedEntity.toCart()
+                val cartItems = cachedCart.products.map {
+                    val product = productApi.getProductById(it.productId)
+                    CartItem(product = product, quantity = it.quantity)
+                }
+                return Resource.Success(cartItems)
+            }
+            // Only fetch cart from API if the cache is not exist/expired
             val carts = cartApi.getUserCart(userId)
-
-            // Get the most recent cart
             val latestCart = carts.maxByOrNull { it.id }
-
             if (latestCart == null) {
                 return Resource.Success(emptyList())
             }
-
-            // Fetch full product details for each cart item
+            cartDao.insertAll(carts.map { it.toEntity() })
             val cartItems = latestCart.products.map { cartProduct ->
                 val product = productApi.getProductById(cartProduct.productId)
                 CartItem(
@@ -40,7 +64,6 @@ class CartRepositoryImpl @Inject constructor(
                     quantity = cartProduct.quantity
                 )
             }
-
             Resource.Success(cartItems)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "An unexpected error occurred")
@@ -49,44 +72,41 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun addToCart(userId: Int, productId: Int, quantity: Int): Resource<Cart> {
         return try {
-            // Get user's existing cart
+            val cachedEntity = cartDao.getAllCarts()
+                .filter { it.userId == userId }
+                .maxByOrNull { it.id }
             val existingCarts = cartApi.getUserCart(userId)
+            if (cachedEntity != null && isCacheValid(cachedEntity.lastUpdated)) {
+                return Resource.Success(cachedEntity.toCart())
+            }
             val latestCart = existingCarts.maxByOrNull { it.id }
-
             val cart = if (latestCart != null) {
-                // Update existing cart - check if product already exists
                 val existingProducts = latestCart.products.toMutableList()
                 val existingProductIndex =
                     existingProducts.indexOfFirst { it.productId == productId }
-
                 if (existingProductIndex != -1) {
-                    // Product exists, update quantity
                     existingProducts[existingProductIndex] =
                         existingProducts[existingProductIndex].copy(
                             quantity = existingProducts[existingProductIndex].quantity + quantity
                         )
                 } else {
-                    // Product doesn't exist, add new product
                     existingProducts.add(CartProduct(productId = productId, quantity = quantity))
                 }
-
-                // Use PUT to update cart
                 val updatedCart = latestCart.copy(
                     date = getCurrentDate(),
                     products = existingProducts
                 )
                 cartApi.updateCart(latestCart.id, updatedCart)
             } else {
-                // Create new cart using POST
                 val newCart = Cart(
-                    id = 0, // Will be assigned by API
+                    id = 1,
                     userId = userId,
                     date = getCurrentDate(),
                     products = listOf(CartProduct(productId = productId, quantity = quantity))
                 )
                 cartApi.addToCart(newCart)
             }
-
+            cartDao.insertCart(cart.toEntity())
             Resource.Success(cart)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Failed to add item to cart")
@@ -95,7 +115,12 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun updateCart(cartId: Int, cart: Cart): Resource<Cart> {
         return try {
+            val cachedEntity = cartDao.getCartById(cartId)
+            cartDao.updateCart(cart.toEntity())
             val updatedCart = cartApi.updateCart(cartId, cart)
+            if (cachedEntity != null) {
+                return Resource.Success(cachedEntity.toCart())
+            }
             Resource.Success(updatedCart)
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Failed to update cart")
@@ -104,6 +129,10 @@ class CartRepositoryImpl @Inject constructor(
 
     override suspend fun deleteCart(cartId: Int): Resource<Cart> {
         return try {
+            val cachedEntity = cartDao.getCartById(cartId)
+            if (cachedEntity != null) {
+                cartDao.deleteCart(cachedEntity)
+            }
             val deletedCart = cartApi.deleteCart(cartId)
             Resource.Success(deletedCart)
         } catch (e: Exception) {
