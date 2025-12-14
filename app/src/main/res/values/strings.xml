@@ -30,7 +30,26 @@
     <string name="product_detail_price_format">$%.2f</string>
     <string name="product_detail_description_label">Description</string>
     <string name="product_detail_add_to_cart">Add to Cart</string>
+    <string name="product_detail_adding_to_cart">Adding to Cart…</string>
     <string name="product_detail_loading">Loading product details…</string>
     <string name="product_detail_error_generic">Failed to load product details</string>
     <string name="product_detail_retry">Retry</string>
+
+    <string name="cart_title">Shopping Cart</string>
+    <string name="cart_items_count">%d items</string>
+    <string name="cart_back">Back</string>
+    <string name="cart_price_format">$%.2f</string>
+    <string name="cart_decrease_quantity">Decrease quantity</string>
+    <string name="cart_increase_quantity">Increase quantity</string>
+    <string name="cart_remove_item">Remove item</string>
+    <string name="cart_order_summary">Order Summary</string>
+    <string name="cart_subtotal">Subtotal</string>
+    <string name="cart_tax">Tax (10%)</string>
+    <string name="cart_total">Total</string>
+    <string name="cart_checkout_button">Proceed to Checkout</string>
+    <string name="cart_empty_title">Your cart is empty</string>
+    <string name="cart_empty_message">Add some products to get started!</string>
+    <string name="cart_loading">Loading cart…</string>
+    <string name="cart_error_generic">Failed to load cart</string>
+    <string name="cart_retry">Retry</string>
 </resources>

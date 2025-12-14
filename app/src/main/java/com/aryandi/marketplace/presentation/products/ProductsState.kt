@@ -9,5 +9,6 @@ data class ProductsState(
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val hasMorePages: Boolean = true,
-    val currentPage: Int = 1
+    val currentPage: Int = 1,
+    val cartItemCount: Int = 0
 )
