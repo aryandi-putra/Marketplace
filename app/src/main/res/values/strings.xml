@@ -52,4 +52,15 @@
     <string name="cart_loading">Loading cart…</string>
     <string name="cart_error_generic">Failed to load cart</string>
     <string name="cart_retry">Retry</string>
+
+    <string name="profile_title">User Profile</string>
+    <string name="profile_loading">Loading profile…</string>
+    <string name="profile_error">Failed to load profile</string>
+    <string name="profile_retry">Retry</string>
+    <string name="profile_username">Username</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_phone">Phone</string>
+    <string name="profile_address">Address</string>
+    <string name="profile_name">Name</string>
+    <string name="profile_close">Close</string>
 </resources>

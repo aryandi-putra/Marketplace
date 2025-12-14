@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Badge
@@ -39,6 +40,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +49,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -65,6 +68,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.aryandi.marketplace.R
 import com.aryandi.marketplace.data.model.Product
+import com.aryandi.marketplace.presentation.profile.UserProfileBottomSheet
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +82,11 @@ fun ProductsScreen(
     val gridState = rememberLazyGridState()
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+
+    // Profile bottom sheet state
+    var showProfileSheet by remember { mutableStateOf(false) }
+    val profileSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Reload cart count when screen becomes visible
     DisposableEffect(lifecycleOwner) {
@@ -127,6 +137,20 @@ fun ProductsScreen(
                     )
                 },
                 actions = {
+                    // Profile icon
+                    IconButton(
+                        onClick = {
+                            showProfileSheet = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "User Profile",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+
+                    // Cart icon
                     IconButton(onClick = onCartClick) {
                         BadgedBox(
                             badge = {
@@ -212,6 +236,17 @@ fun ProductsScreen(
                 }
             }
         }
+    }
+
+    // User Profile Bottom Sheet
+    if (showProfileSheet) {
+        UserProfileBottomSheet(
+            userId = 1, // Using user ID 1 for demo (mor_2314)
+            sheetState = profileSheetState,
+            onDismiss = {
+                showProfileSheet = false
+            }
+        )
     }
 }
 
