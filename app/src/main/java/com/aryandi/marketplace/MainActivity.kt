@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.aryandi.marketplace.presentation.cart.CartScreen
 import com.aryandi.marketplace.presentation.login.LoginScreen
 import com.aryandi.marketplace.presentation.productdetail.ProductDetailScreen
 import com.aryandi.marketplace.presentation.products.ProductsScreen
@@ -42,6 +43,9 @@ class MainActivity : ComponentActivity() {
                         ProductsScreen(
                             onProductClick = { productId ->
                                 navController.navigate("product/$productId")
+                            },
+                            onCartClick = {
+                                navController.navigate("cart")
                             }
                         )
                     }
@@ -57,6 +61,14 @@ class MainActivity : ComponentActivity() {
                         val productId = backStackEntry.arguments?.getInt("productId") ?: 0
                         ProductDetailScreen(
                             productId = productId,
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
+                    composable("cart") {
+                        CartScreen(
                             onBackClick = {
                                 navController.popBackStack()
                             }
