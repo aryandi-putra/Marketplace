@@ -28,6 +28,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -35,9 +37,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -59,12 +61,28 @@ fun ProductDetailScreen(
 ) {
     val viewModel: ProductDetailViewModel = hiltViewModel()
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(productId) {
         viewModel.sendIntent(ProductDetailIntent.LoadProduct(productId))
     }
 
+    // Show snackbar when add to cart succeeds
+    LaunchedEffect(state.addToCartSuccess) {
+        if (state.addToCartSuccess) {
+            snackbarHostState.showSnackbar("Item added to cart successfully!")
+        }
+    }
+
+    // Show snackbar when add to cart fails
+    LaunchedEffect(state.addToCartError) {
+        state.addToCartError?.let { error ->
+            snackbarHostState.showSnackbar(error)
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -110,7 +128,18 @@ fun ProductDetailScreen(
                 }
 
                 state.product != null -> {
-                    ProductDetailContent(product = state.product!!)
+                    ProductDetailContent(
+                        product = state.product!!,
+                        isAddingToCart = state.isAddingToCart,
+                        onAddToCart = {
+                            viewModel.sendIntent(
+                                ProductDetailIntent.AddToCart(
+                                    productId = state.product!!.id,
+                                    quantity = 1
+                                )
+                            )
+                        }
+                    )
                 }
             }
         }
@@ -118,7 +147,11 @@ fun ProductDetailScreen(
 }
 
 @Composable
-fun ProductDetailContent(product: Product) {
+fun ProductDetailContent(
+    product: Product,
+    isAddingToCart: Boolean,
+    onAddToCart: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -265,23 +298,38 @@ fun ProductDetailContent(product: Product) {
 
             // Add to Cart Button
             Button(
-                onClick = { /* Handle add to cart */ },
+                onClick = onAddToCart,
+                enabled = !isAddingToCart,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.product_detail_add_to_cart),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                if (isAddingToCart) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 3.dp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.product_detail_adding_to_cart),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.product_detail_add_to_cart),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))

@@ -30,6 +30,7 @@
     <string name="product_detail_price_format">$%.2f</string>
     <string name="product_detail_description_label">Description</string>
     <string name="product_detail_add_to_cart">Add to Cart</string>
+    <string name="product_detail_adding_to_cart">Adding to Cart…</string>
     <string name="product_detail_loading">Loading product details…</string>
     <string name="product_detail_error_generic">Failed to load product details</string>
     <string name="product_detail_retry">Retry</string>
