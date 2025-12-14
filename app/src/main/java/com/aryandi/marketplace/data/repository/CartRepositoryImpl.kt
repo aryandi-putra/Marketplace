@@ -15,14 +15,17 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
-// Time limit for cache in milliseconds (10 minutes)
-private const val CACHE_TIMEOUT_MS = 10 * 60 * 1000L
 
 class CartRepositoryImpl @Inject constructor(
     private val cartApi: CartApi,
     private val productApi: ProductApi,
     private val cartDao: CartDao
 ) : CartRepository {
+
+    companion object {
+        // Time limit for cache in milliseconds (10 minutes)
+        const val CACHE_TIMEOUT_MS = 10 * 60 * 1000L
+    }
 
     private fun getCurrentDate(): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -35,14 +38,17 @@ class CartRepositoryImpl @Inject constructor(
             CartItem(product = product, quantity = cartProductData.quantity)
         }
 
+    private fun isCacheValid(cart: CartEntity?): Boolean {
+        return cart != null && (System.currentTimeMillis() - cart.lastUpdated <= CACHE_TIMEOUT_MS)
+    }
+
     override suspend fun getUserCart(userId: Int): Resource<List<CartItem>> {
         return try {
             val localCart = cartDao.getUserCart(userId)
             val now = System.currentTimeMillis()
-            val isStale = localCart == null || (now - localCart.lastUpdated > CACHE_TIMEOUT_MS)
 
-            // Refresh from API if cache is stale or missing
-            if (isStale) {
+            // Refresh from API if cache is invalid (missing or stale)
+            if (!isCacheValid(localCart)) {
                 refreshCacheFromRemote(userId, now)
             }
 
@@ -51,10 +57,7 @@ class CartRepositoryImpl @Inject constructor(
             val items = cachedCart?.let { cartEntityToItems(it) } ?: emptyList()
             Resource.Success(items)
         } catch (e: Exception) {
-            // Fallback: try to return cached items if available
-            cartDao.getUserCart(userId)?.let {
-                Resource.Success(cartEntityToItems(it))
-            } ?: Resource.Error(e.message ?: "An unexpected error occurred")
+            Resource.Error(e.message ?: "An unexpected error occurred")
         }
     }
 
